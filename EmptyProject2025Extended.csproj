@@ -19,8 +19,5 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Helpers\" />
-    <Folder Include="Security\" />
-    <Folder Include="Views\" />
-    <Folder Include="Presenters\" />
   </ItemGroup>
 </Project>

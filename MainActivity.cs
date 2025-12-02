@@ -1,74 +1,123 @@
-using Android.Content;
-using Android.Content.Res;
-using Android.Graphics;
-using Android.Provider;
-using Android.Runtime;
-using Android.Util;
-using Android.Views;
-using System.Timers;
+using Android.App;
+using Android.OS;
+using Android.Widget;
 using AndroidX.AppCompat.App;
-
+using EmptyProject2025Extended.Data;
+using EmptyProject2025Extended.Models;
+using EmptyProject2025Extended.Presenters;
+using System.Collections.Generic;
 
 namespace EmptyProject2025Extended
 {
-    [Activity(Label = "@string/app_name", Theme = "@style/AppTheme", MainLauncher = true)]
-    public class MainActivity : AppCompatActivity, IView
+    [Activity(Label = "@string/app_name", Theme = "@style/AppTheme")]
+    public class MainActivity : Activity, IMainView
     {
-        private Presenter presenter;
+        private MainPresenter presenter;
 
-        protected override void OnCreate(Bundle? savedInstanceState)
+        // רכיבי XML
+        private Button btnAdd;
+        private EditText editSearch;
+        private ImageView imgProfile;
+        private LinearLayout passwordContainer;
+
+        protected override void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
-            // Set our view from the "main" layout resource
+
             SetContentView(Resource.Layout.activity_main);
-            presenter = new Presenter(view: this);
-        }
 
-        public override bool OnCreateOptionsMenu(IMenu? menu)
-        {
-            MenuInflater.Inflate(Resource.Menu.main_menu, menu);
-            return true;
-        }
+            // חיבור רכיבים מה-XML
+            btnAdd = FindViewById<Button>(Resource.Id.btnAdd);
+            editSearch = FindViewById<EditText>(Resource.Id.editSearch);
+            imgProfile = FindViewById<ImageView>(Resource.Id.imgProfile);
+            passwordContainer = FindViewById<LinearLayout>(Resource.Id.passwordContainer);
 
-        public override bool OnOptionsItemSelected(IMenuItem item)
-        {
-            int id = item.ItemId;
-            if (id == Resource.Id.action_profile)
+            // יצירת Presenter
+            presenter = new MainPresenter(this, new DBHelper(this));
+
+            // טעינת כל הסיסמאות במסך
+            presenter.LoadPasswords();
+
+            // אירועים
+            btnAdd.Click += (s, e) =>
             {
-                Toast.MakeText(this, "YOU PRESSED PROFILE ICON", ToastLength.Short).Show();
-            }
-            if (id == Resource.Id.action_start)
+                new CreatePasswordDialog(this, presenter).Show();
+            };
+
+
+            editSearch.TextChanged += (s, e) =>
             {
-                Toast.MakeText(this, "YOU PRESSED START", ToastLength.Short).Show();
-            }
-            if (id == Resource.Id.action_highScore)
+                presenter.Search(editSearch.Text);
+            };
+
+            imgProfile.Click += (s, e) =>
             {
-                Toast.MakeText(this, "YOU PRESSED HIGH SCORES", ToastLength.Short).Show();
-                Intent intent = new Intent(this, typeof(HighScores));
-                StartActivity(intent);
-            }
-            return base.OnOptionsItemSelected(item);
+                Toast.MakeText(this, "PROFILE MENU", ToastLength.Short).Show();
+                // פה נפתח תפריט פרופיל
+            };
         }
 
-        public override void OnRequestPermissionsResult(int requestCode, string[] permissions, [GeneratedEnum] Android.Content.PM.Permission[] grantResults)
-        {
-            base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
-        }
-
-        // Interface methods
-        public void MarkButton(int i, int j, char letter)
-        {
-            // your code here
-        }
-
-        public void DisplayMessage(string message)
+        // הצגת הודעות
+        public void ShowMessage(string message)
         {
             Toast.MakeText(this, message, ToastLength.Short).Show();
         }
 
-        public void ClearBoard()
+        // הצגת רשימת סיסמאות על המסך
+        public void DisplayPasswords(List<PasswordInfo> passwords)
         {
-            // your code here
+            passwordContainer.RemoveAllViews(); // מנקה את הרשימה
+
+            foreach (var item in passwords)
+            {
+                // מנפחים את השורה
+                var row = LayoutInflater.Inflate(Resource.Layout.PasswordRow, null);
+
+                // מוצאים את הכפתורים והטקסט מהשורה
+                TextView txtSite = row.FindViewById<TextView>(Resource.Id.txtSiteName);
+                Button btnView = row.FindViewById<Button>(Resource.Id.buttonView);
+                Button btnEdit = row.FindViewById<Button>(Resource.Id.buttonEdit);
+                Button btnDelete = row.FindViewById<Button>(Resource.Id.buttonDelete);
+
+                txtSite.Text = item.Site;
+
+                btnView.Click += (s, e) =>
+                {
+                    ShowMessage("Viewing: " + item.Site);
+                };
+
+                btnEdit.Click += (s, e) =>
+                {
+                    ShowMessage("Editing: " + item.Site);
+                };
+
+                btnDelete.Click += (s, e) =>
+                {
+                    presenter.DeletePassword(item.Id);
+                };
+
+                passwordContainer.AddView(row);
+            }
         }
+
+        public void ClearList()
+        {
+            passwordContainer.RemoveAllViews();
+        }
+        public void OpenAddPopup()
+        {
+            Toast.MakeText(this, "ADD POPUP", ToastLength.Short).Show();
+        }
+
+        public void OpenEditPopup(PasswordInfo pw)
+        {
+            Toast.MakeText(this, "EDIT POPUP FOR: " + pw.Site, ToastLength.Short).Show();
+        }
+
+        public void ClearInputFields()
+        {
+            // לא בשימוש במסך הזה – השאר ריק
+        }
+
     }
 }

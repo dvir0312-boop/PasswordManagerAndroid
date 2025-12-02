@@ -2,20 +2,18 @@
 using Android.Database;
 using Android.Database.Sqlite;
 using EmptyProject2025Extended.Models;
+using System.Collections.Generic;
 
 namespace EmptyProject2025Extended.Data
 {
-    internal class DBHelper : SQLiteOpenHelper
+    public class DBHelper : SQLiteOpenHelper
     {
-        // DBHelper is a class to handle SQLite:
-        // (1) Creates an SQLite file on phone storage.
-        // (2) Insert new listing in SQLite.
-        // (3) Delete a listing by Id from SQLite.
-        // (4) Update a listing in sQLite by Id.
-        // (5) Return all rows from SQLite.
-        // (6) Return a specific row from SQLite. Search by any criteria.
         private const string DATABASE_NAME = "SQLiteExample.db";
         private const int DATABASE_VERSION = 1;
+
+        //**********************************************************
+        // PASSWORD TABLE
+        //**********************************************************
         private const string TABLE_RECORD = "PasswordData";
 
         private const string COLUMN_ID = "_id";
@@ -23,141 +21,283 @@ namespace EmptyProject2025Extended.Data
         private const string COLUMN_PASSWORD = "password";
         private const string COLUMN_SITE = "site";
 
-        private static readonly string[] allColumns = { COLUMN_ID, COLUMN_USERNAME, COLUMN_PASSWORD, COLUMN_SITE };
+        private static readonly string[] allColumns =
+        {
+            COLUMN_ID, COLUMN_USERNAME, COLUMN_PASSWORD, COLUMN_SITE
+        };
 
-        private const string CREATE_TABLE_USER = "CREATE TABLE IF NOT EXISTS " + TABLE_RECORD + "(" +
-            COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
-            COLUMN_USERNAME + " TEXT ," +
-            COLUMN_PASSWORD + " TEXT," +
+        private const string CREATE_TABLE_PWD =
+            "CREATE TABLE IF NOT EXISTS " + TABLE_RECORD + " (" +
+            COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+            COLUMN_USERNAME + " TEXT, " +
+            COLUMN_PASSWORD + " TEXT, " +
             COLUMN_SITE + " TEXT)";
 
-        private DBHelperService dbHelperService;
-        private SQLiteDatabase database; // access to SQLite
-        private Context context;
+        //**********************************************************
+        // USERS TABLE
+        //**********************************************************
+        private const string TABLE_USERS = "Users";
 
-        // DBHelper constructor
-        public DBHelper(Context context) : base(context, DATABASE_NAME, null, DATABASE_VERSION)
+        private const string COLUMN_USER_ID = "id";
+        private const string COLUMN_USER_USERNAME = "username";
+        private const string COLUMN_USER_PASSWORDHASH = "passwordHash";
+        private const string COLUMN_USER_SALT = "salt";
+
+        private const string CREATE_TABLE_USERS =
+            "CREATE TABLE IF NOT EXISTS " + TABLE_USERS + " (" +
+            COLUMN_USER_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+            COLUMN_USER_USERNAME + " TEXT UNIQUE, " +
+            COLUMN_USER_PASSWORDHASH + " TEXT, " +
+            COLUMN_USER_SALT + " TEXT)";
+
+        private SQLiteDatabase database;
+        private readonly Context context;
+
+        public DBHelper(Context context)
+            : base(context, DATABASE_NAME, null, DATABASE_VERSION)
         {
             this.context = context;
-            dbHelperService = new DBHelperService();
         }
 
+        //**********************************************************
+        // ON CREATE
+        //**********************************************************
         public override void OnCreate(SQLiteDatabase db)
         {
+            db.ExecSQL(CREATE_TABLE_PWD);
+            db.ExecSQL(CREATE_TABLE_USERS);
 
-            db.ExecSQL(CREATE_TABLE_USER);
+            // Insert default admin user
+            string defaultSalt = "static_salt";
+            string defaultHash = "1234" + defaultSalt;
+
+            ContentValues admin = new ContentValues();
+            admin.Put(COLUMN_USER_USERNAME, "admin");
+            admin.Put(COLUMN_USER_PASSWORDHASH, defaultHash);
+            admin.Put(COLUMN_USER_SALT, defaultSalt);
+
+            db.Insert(TABLE_USERS, null, admin);
         }
 
+        //**********************************************************
+        // ON UPGRADE
+        //**********************************************************
         public override void OnUpgrade(SQLiteDatabase db, int oldVersion, int newVersion)
         {
-            // this database is only a cache for online data, so its upgrade policy is
-            // to simply to discard the data and start over
             db.ExecSQL("DROP TABLE IF EXISTS " + TABLE_RECORD);
+            db.ExecSQL("DROP TABLE IF EXISTS " + TABLE_USERS);
             OnCreate(db);
         }
-        //*****************************************************************************************************************************************************
-        /// <param name="score"></param>
-        public void Create(Score score)
+
+        //**********************************************************
+        // CREATE PASSWORD
+        //**********************************************************
+        public void Create(PasswordInfo passwordInfo)
         {
-            // insert a new row in database.
-            database = WritableDatabase; // Get access to write to database
+            database = WritableDatabase;
 
-            // Create a new map of values, where column names are the keys
             ContentValues values = new ContentValues();
+            values.Put(COLUMN_USERNAME, passwordInfo.Username);
+            values.Put(COLUMN_PASSWORD, passwordInfo.Password);
+            values.Put(COLUMN_SITE, passwordInfo.Site);
 
-            values.Put(COLUMN_USERNAME, PasswordManaging.GetUserName());
-            values.Put(COLUMN_PASSWORD, PasswordManaging.GetPassword());
-            values.Put(COLUMN_SITE, PasswordManaging.GetSite());
-            // insert a new row, returning the primary key value of the new row
             long id = database.Insert(TABLE_RECORD, null, values);
-            PasswordManaging.SetId(id);
-            values.Put(COLUMN_ID, PasswordManaging.GetId());
-            database.Close(); // Close the database
+            passwordInfo.Id = id;
+
+            database.Close();
         }
 
-
-
-        public void Update(PasswordManaging passwordManaging)
+        //**********************************************************
+        // UPDATE PASSWORD
+        //**********************************************************
+        public void Update(PasswordInfo passwordInfo)
         {
-            // update a listing in SQLite.
-            // receives an object.
-            database = ReadableDatabase; // Get access to read the database
-            string[] lookUpValue = { passwordManaging.GetId().ToString() };
+            database = WritableDatabase;
+
             ContentValues values = new ContentValues();
-            values.Put(COLUMN_ID, passwordManaging.GetId());
-            values.Put(COLUMN_USERNAME, passwordManaging.GetUserUserName());
-            values.Put(COLUMN_PASSWORD, passwordManaging.GetPassword());
-            values.Put(COLUMN_SITE, passwordManaging.GetSite());
-            database.Update(TABLE_RECORD, values, COLUMN_ID + " = ? ", lookUpValue);
-            database.Close(); // Close the database
+            values.Put(COLUMN_USERNAME, passwordInfo.Username);
+            values.Put(COLUMN_PASSWORD, passwordInfo.Password);
+            values.Put(COLUMN_SITE, passwordInfo.Site);
+
+            database.Update(
+                TABLE_RECORD,
+                values,
+                COLUMN_ID + " = ?",
+                new string[] { passwordInfo.Id.ToString() }
+            );
+
+            database.Close();
         }
 
-
-
-        public List<Score> Read(string column, string[] values)
-        {
-            // return a specific row in table as an array list.
-            // select by any criteria.
-            database = ReadableDatabase; // Get access to read the database
-            List<Score> PasswordManagingList = new List<PasswordManaging>();
-
-            ICursor cursor = database.Query(TABLE_RECORD, allColumns, column + " = ? ", values, null, null, null); // cursor points at a certain row
-            if (cursor.Count > 0)
-            {
-                while (cursor.MoveToNext())
-                {
-                    long id = cursor.GetLong(cursor.GetColumnIndex(COLUMN_ID));
-                    string username = cursor.GetBlob(cursor.GetColumnIndex(COLUMN_USERNAME));
-                    string password = cursor.GetString(cursor.GetColumnIndex(COLUMN_PASSWORD));
-                    string site = cursor.GetString(cursor.GetColumnIndex(COLUMN_SITE));
-                    Score temp = new Score(id, dbHelperService.ByteToImage(image), name, level, score);
-                    scoreList.Add(temp);
-                }
-            }
-            cursor.Close();
-            database.Close(); // close the database
-            return PasswordManagingList;
-        }
-        public List<PasswordManaging> ReadAll()
-        {
-            // return all rows in table as an array list.
-            database = ReadableDatabase; // Get access to read the database
-            List<PasswordManaging> PasswordManagingList = new List<PasswordManaging>();
-
-            ICursor cursor = database.Query(TABLE_RECORD, allColumns, null, null, null, null, COLUMN_ID + " ASC"); // cursor points at a certain row
-            if (cursor.Count > 0)
-            {
-                while (cursor.MoveToNext())
-                {
-                    long id = cursor.GetLong(cursor.GetColumnIndex(COLUMN_ID));
-                    string username = cursor.GetBlob(cursor.GetColumnIndex(COLUMN_USERNAME));
-                    string password = cursor.GetString(cursor.GetColumnIndex(COLUMN_PASSWORD));
-                    string site = cursor.GetString(cursor.GetColumnIndex(COLUMN_SITE));
-                    Score temp = new Score(id, dbHelperService.ByteToImage(image), name, level, score);
-                    scoreList.Add(temp);
-                }
-            }
-            cursor.Close();
-            database.Close(); // close the database
-            return PasswordManagingList;
-        }
+        //**********************************************************
+        // DELETE PASSWORD BY ID
+        //**********************************************************
         public void DeleteById(long id)
         {
-            // delete a row from database.
-            // receive an id as long.
-            database = ReadableDatabase; // Get access to read the database
-            database.Delete(TABLE_RECORD, COLUMN_ID + " = " + id, null);
-            database.Close(); // Close the database
+            database = WritableDatabase;
+
+            database.Delete(
+                TABLE_RECORD,
+                COLUMN_ID + " = ?",
+                new string[] { id.ToString() }
+            );
+
+            database.Close();
         }
+
+        //**********************************************************
+        // DELETE ALL PASSWORDS
+        //**********************************************************
         public int DeleteAll()
         {
-            // delete all rows from database.
-            // return the number of rows deleted.
-            database = ReadableDatabase; // Get access to read the database
+            database = WritableDatabase;
             int rows = database.Delete(TABLE_RECORD, null, null);
-            database.Close(); // Close the database
+            database.Close();
             return rows;
         }
 
+        //**********************************************************
+        // READ PASSWORD BY FIELD
+        //**********************************************************
+        public List<PasswordInfo> Read(string column, string[] values)
+        {
+            database = ReadableDatabase;
+            List<PasswordInfo> list = new List<PasswordInfo>();
+
+            ICursor cursor = database.Query(
+                TABLE_RECORD,
+                allColumns,
+                column + " = ?",
+                values,
+                null,
+                null,
+                null
+            );
+
+            if (cursor.MoveToFirst())
+            {
+                do
+                {
+                    long id = cursor.GetLong(cursor.GetColumnIndexOrThrow(COLUMN_ID));
+                    string username = cursor.GetString(cursor.GetColumnIndexOrThrow(COLUMN_USERNAME));
+                    string password = cursor.GetString(cursor.GetColumnIndexOrThrow(COLUMN_PASSWORD));
+                    string site = cursor.GetString(cursor.GetColumnIndexOrThrow(COLUMN_SITE));
+
+                    list.Add(new PasswordInfo(id, username, password, site));
+
+                } while (cursor.MoveToNext());
+            }
+
+            cursor.Close();
+            database.Close();
+
+            return list;
+        }
+
+        //**********************************************************
+        // READ ALL PASSWORDS
+        //**********************************************************
+        public List<PasswordInfo> ReadAll()
+        {
+            database = ReadableDatabase;
+            List<PasswordInfo> list = new List<PasswordInfo>();
+
+            ICursor cursor = database.Query(
+                TABLE_RECORD,
+                allColumns,
+                null,
+                null,
+                null,
+                null,
+                COLUMN_ID + " ASC"
+            );
+
+            if (cursor.MoveToFirst())
+            {
+                do
+                {
+                    long id = cursor.GetLong(cursor.GetColumnIndexOrThrow(COLUMN_ID));
+                    string username = cursor.GetString(cursor.GetColumnIndexOrThrow(COLUMN_USERNAME));
+                    string password = cursor.GetString(cursor.GetColumnIndexOrThrow(COLUMN_PASSWORD));
+                    string site = cursor.GetString(cursor.GetColumnIndexOrThrow(COLUMN_SITE));
+
+                    list.Add(new PasswordInfo(id, username, password, site));
+
+                } while (cursor.MoveToNext());
+            }
+
+            cursor.Close();
+            database.Close();
+
+            return list;
+        }
+        //**********************************************************
+        // INSERT NEW USER
+        //**********************************************************
+        public void InsertUser(User user)
+        {
+            // Open database in write mode to insert new data
+            SQLiteDatabase database = WritableDatabase;
+
+            // Prepare a container for the values we want to insert
+            ContentValues values = new ContentValues();
+
+            // Put values into the container - these key names MUST match the column names in the database
+            values.Put("username", user.Username);
+            values.Put("passwordHash", user.PasswordHash);
+            values.Put("salt", user.Salt);
+
+            // Insert the values into the Users table
+            database.Insert("Users", null, values);
+
+            // Close the database to free resources and avoid memory leaks
+            database.Close();
+        }
+
+        //**********************************************************
+        // GET USER BY USERNAME
+        //**********************************************************
+        public User GetUser(string username)
+        {
+            SQLiteDatabase db = ReadableDatabase;
+
+            string[] columns =
+            {
+                COLUMN_USER_ID,
+                COLUMN_USER_USERNAME,
+                COLUMN_USER_PASSWORDHASH,
+                COLUMN_USER_SALT
+            };
+
+            string selection = COLUMN_USER_USERNAME + " = ?";
+            string[] selectionArgs = { username };
+
+            ICursor cursor = db.Query(
+                TABLE_USERS,
+                columns,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                null
+            );
+
+            User user = null;
+
+            if (cursor.MoveToFirst())
+            {
+                long id = cursor.GetLong(cursor.GetColumnIndexOrThrow(COLUMN_USER_ID));
+                string uname = cursor.GetString(cursor.GetColumnIndexOrThrow(COLUMN_USER_USERNAME));
+                string hash = cursor.GetString(cursor.GetColumnIndexOrThrow(COLUMN_USER_PASSWORDHASH));
+                string salt = cursor.GetString(cursor.GetColumnIndexOrThrow(COLUMN_USER_SALT));
+
+                user = new User(id, uname, hash, salt);
+            }
+
+            cursor.Close();
+            db.Close();
+
+            return user;
+        }
     }
 }
