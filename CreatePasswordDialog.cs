@@ -12,60 +12,51 @@ namespace EmptyProject2025Extended
         private readonly Context context;
         private readonly DBHelper db;
         private readonly MainPresenter presenter;
+        private readonly string owner;
 
-        public CreatePasswordDialog(Context context, MainPresenter presenter)
+        public CreatePasswordDialog(Context context, MainPresenter presenter, string owner)
         {
-            // Store context (needed to show UI)
             this.context = context;
-
-            // Create access to the database
-            db = new DBHelper(context);
-
-            // Presenter reference so we can refresh the list after creation
             this.presenter = presenter;
+            this.owner = owner;
+            db = new DBHelper(context);
         }
 
         public void Show()
         {
-            // Create popup window
             Dialog dialog = new Dialog(context);
-
-            // Attach our XML layout to it
             dialog.SetContentView(Resource.Layout.CreatePassword);
 
-            // Connect XML fields to variables
             EditText siteInput = dialog.FindViewById<EditText>(Resource.Id.editCreateSite);
             EditText usernameInput = dialog.FindViewById<EditText>(Resource.Id.editCreateUsername);
             EditText passwordInput = dialog.FindViewById<EditText>(Resource.Id.editCreatePassword);
-            Button createButton = dialog.FindViewById<Button>(Resource.Id.buttonCreate);
+            Button btnCreate = dialog.FindViewById<Button>(Resource.Id.buttonCreate);
 
-            // Handle save button click
-            createButton.Click += (s, e) =>
+            btnCreate.Click += (s, e) =>
             {
                 string site = siteInput.Text;
                 string username = usernameInput.Text;
                 string password = passwordInput.Text;
 
-                // Validate fields
                 if (string.IsNullOrWhiteSpace(site) ||
                     string.IsNullOrWhiteSpace(username) ||
                     string.IsNullOrWhiteSpace(password))
                 {
-                    Toast.MakeText(context, "All fields must be filled", ToastLength.Short).Show();
+                    Toast.MakeText(context, "All fields are required", ToastLength.Short).Show();
                     return;
                 }
 
-                // Create a new password record object
-                PasswordInfo data = new PasswordInfo(0, username, password, site);
+                PasswordInfo info = new PasswordInfo(
+                    0,
+                    username,
+                    password,
+                    site,
+                    owner
+                );
 
-                // Save to database
-                db.Create(data);
-
-                // Close popup
-                dialog.Dismiss();
-
-                // Refresh UI list
+                db.Create(info);
                 presenter.LoadPasswords();
+                dialog.Dismiss();
             };
 
             dialog.Show();

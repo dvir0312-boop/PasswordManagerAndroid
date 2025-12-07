@@ -8,21 +8,23 @@ namespace EmptyProject2025Extended.Presenters
     {
         private readonly IMainView view;
         private readonly DBHelper db;
+        private readonly string owner;
 
-        public MainPresenter(IMainView view, DBHelper db)
+        public MainPresenter(IMainView view, DBHelper db, string owner)
         {
             this.view = view;
             this.db = db;
+            this.owner = owner;
         }
 
-        // Load all passwords from DB and display them
+        // Load all passwords for current owner
         public void LoadPasswords()
         {
-            List<PasswordInfo> all = db.ReadAll();
-            view.DisplayPasswords(all);
+            List<PasswordInfo> list = db.ReadAll(owner);
+            view.DisplayPasswords(list);
         }
 
-        // Search passwords by text
+        // Simple search by site (local filter, no DB change!)
         public void Search(string text)
         {
             if (string.IsNullOrWhiteSpace(text))
@@ -31,36 +33,19 @@ namespace EmptyProject2025Extended.Presenters
                 return;
             }
 
-            List<PasswordInfo> results = db.Read("site", new string[] { text });
+            List<PasswordInfo> all = db.ReadAll(owner);
+            List<PasswordInfo> filtered = all.FindAll(p =>
+                p.Site != null &&
+                p.Site.ToLower().Contains(text.ToLower())
+            );
 
-            if (results.Count == 0)
-            {
-                view.ClearList();
-                view.ShowMessage("No results");
-                return;
-            }
-
-            view.DisplayPasswords(results);
+            view.DisplayPasswords(filtered);
         }
 
-        // Delete a password by ID
         public void DeletePassword(long id)
         {
             db.DeleteById(id);
             LoadPasswords();
-            view.ShowMessage("Password deleted");
-        }
-
-        // Open add-password popup
-        public void AddPassword()
-        {
-            view.OpenAddPopup();
-        }
-
-        // Open edit-password popup
-        public void EditPassword(PasswordInfo pw)
-        {
-            view.OpenEditPopup(pw);
         }
     }
 }

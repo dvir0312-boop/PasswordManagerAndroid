@@ -44,6 +44,8 @@ namespace EmptyProject2025Extended
                 // Read text from input fields
                 string username = usernameInput.Text;
                 string password = passwordInput.Text;
+                username = username.Trim().ToLower();
+
 
                 // Basic validation: ensure user didn't leave fields empty
                 if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))

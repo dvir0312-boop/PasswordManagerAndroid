@@ -1,7 +1,6 @@
-using Android.App;
+ן»¿using Android.App;
 using Android.OS;
 using Android.Widget;
-using AndroidX.AppCompat.App;
 using EmptyProject2025Extended.Data;
 using EmptyProject2025Extended.Models;
 using EmptyProject2025Extended.Presenters;
@@ -14,66 +13,79 @@ namespace EmptyProject2025Extended
     {
         private MainPresenter presenter;
 
-        // רכיבי XML
+        // UI components
         private Button btnAdd;
         private EditText editSearch;
         private ImageView imgProfile;
         private LinearLayout passwordContainer;
 
+        // Logged-in username (OWNER)
+        private string currentOwner;
+
         protected override void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
-
             SetContentView(Resource.Layout.activity_main);
 
-            // חיבור רכיבים מה-XML
+            // Get OWNER from LoginActivity
+            currentOwner = Intent.GetStringExtra("owner");
+
+            // Safety check (prevents crashes)
+            if (string.IsNullOrWhiteSpace(currentOwner))
+            {
+                Toast.MakeText(this, "User not identified. Please login again.", ToastLength.Long).Show();
+                Finish();
+                return;
+            }
+
+            // Bind UI
             btnAdd = FindViewById<Button>(Resource.Id.btnAdd);
             editSearch = FindViewById<EditText>(Resource.Id.editSearch);
             imgProfile = FindViewById<ImageView>(Resource.Id.imgProfile);
             passwordContainer = FindViewById<LinearLayout>(Resource.Id.passwordContainer);
 
-            // יצירת Presenter
-            presenter = new MainPresenter(this, new DBHelper(this));
+            // Presenter (with owner)
+            presenter = new MainPresenter(this, new DBHelper(this), currentOwner);
 
-            // טעינת כל הסיסמאות במסך
+            // Initial load
             presenter.LoadPasswords();
 
-            // אירועים
+            // ---------------- EVENTS ----------------
+
+            // Add password
             btnAdd.Click += (s, e) =>
             {
-                new CreatePasswordDialog(this, presenter).Show();
+                new CreatePasswordDialog(this, presenter, currentOwner).Show();
             };
 
-
+            // Live search
             editSearch.TextChanged += (s, e) =>
             {
                 presenter.Search(editSearch.Text);
             };
 
+            // Profile (future use)
             imgProfile.Click += (s, e) =>
             {
                 Toast.MakeText(this, "PROFILE MENU", ToastLength.Short).Show();
-                // פה נפתח תפריט פרופיל
             };
         }
 
-        // הצגת הודעות
+        // ---------------- IMainView ----------------
+
         public void ShowMessage(string message)
         {
             Toast.MakeText(this, message, ToastLength.Short).Show();
         }
 
-        // הצגת רשימת סיסמאות על המסך
         public void DisplayPasswords(List<PasswordInfo> passwords)
         {
-            passwordContainer.RemoveAllViews(); // מנקה את הרשימה
+            passwordContainer.RemoveAllViews();
 
             foreach (var item in passwords)
             {
-                // מנפחים את השורה
                 var row = LayoutInflater.Inflate(Resource.Layout.PasswordRow, null);
 
-                // מוצאים את הכפתורים והטקסט מהשורה
                 TextView txtSite = row.FindViewById<TextView>(Resource.Id.txtSiteName);
                 Button btnView = row.FindViewById<Button>(Resource.Id.buttonView);
                 Button btnEdit = row.FindViewById<Button>(Resource.Id.buttonEdit);
@@ -81,16 +93,19 @@ namespace EmptyProject2025Extended
 
                 txtSite.Text = item.Site;
 
+                // VIEW
                 btnView.Click += (s, e) =>
                 {
-                    ShowMessage("Viewing: " + item.Site);
+                    new ViewEditDialog(this, item, presenter, currentOwner).Show(false);
                 };
 
+                // EDIT
                 btnEdit.Click += (s, e) =>
                 {
-                    ShowMessage("Editing: " + item.Site);
+                    new ViewEditDialog(this, item, presenter, currentOwner).Show(true);
                 };
 
+                // DELETE
                 btnDelete.Click += (s, e) =>
                 {
                     presenter.DeletePassword(item.Id);
@@ -104,20 +119,20 @@ namespace EmptyProject2025Extended
         {
             passwordContainer.RemoveAllViews();
         }
+
         public void OpenAddPopup()
         {
-            Toast.MakeText(this, "ADD POPUP", ToastLength.Short).Show();
+            // Not used
         }
 
         public void OpenEditPopup(PasswordInfo pw)
         {
-            Toast.MakeText(this, "EDIT POPUP FOR: " + pw.Site, ToastLength.Short).Show();
+            // Not used
         }
 
         public void ClearInputFields()
         {
-            // לא בשימוש במסך הזה – השאר ריק
+            // Not used
         }
-
     }
 }
