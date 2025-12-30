@@ -10,24 +10,27 @@ namespace EmptyProject2025Extended
     [Activity(Label = "Login", MainLauncher = true)]
     public class LoginActivity : Activity, ILoginView
     {
-        EditText editUsername;
-        EditText editPassword;
-        Button btnLogin;
-        TextView txtRegister;
+        private EditText editUsername;
+        private EditText editPassword;
+        private Button btnLogin;
+        private TextView txtRegister;
+        private TextView txtReset;
 
-        LoginPresenter presenter;
+
+        private LoginPresenter presenter;
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
 
-            // ✅ MATCHES Login.xml
             SetContentView(Resource.Layout.Login);
 
             editUsername = FindViewById<EditText>(Resource.Id.editTextUsername);
             editPassword = FindViewById<EditText>(Resource.Id.editTextPassword);
             btnLogin = FindViewById<Button>(Resource.Id.buttonLogin);
             txtRegister = FindViewById<TextView>(Resource.Id.textRegisterLink);
+            txtReset = FindViewById<TextView>(Resource.Id.textResetLink);
+
 
             presenter = new LoginPresenter(this, new DBHelper(this));
 
@@ -38,9 +41,11 @@ namespace EmptyProject2025Extended
 
             txtRegister.Click += (s, e) =>
             {
-                new RegisterDialog(this).Show();
+                new RegisterDialog(this, presenter).Show();
             };
         }
+
+        // ================= ILoginView =================
 
         public string Username => editUsername.Text;
         public string Password => editPassword.Text;

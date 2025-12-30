@@ -1,84 +1,62 @@
 ﻿using Android.App;
 using Android.Content;
 using Android.Widget;
-using EmptyProject2025Extended.Data;
-using EmptyProject2025Extended.Models;
-using EmptyProject2025Extended.Security;
+using EmptyProject2025Extended.Presenters;
+using System.Collections.Generic;
 
 namespace EmptyProject2025Extended
 {
     public class RegisterDialog
     {
-        // Holds the context of the screen that opened the dialog (example: LoginActivity)
         private readonly Context context;
+        private readonly LoginPresenter presenter;
 
-        // Database helper instance we will use to insert the new user
-        private readonly DBHelper db;
-
-        public RegisterDialog(Context context)
+        public RegisterDialog(Context context, LoginPresenter presenter)
         {
-            // Store context so we can build UI elements or access system features
             this.context = context;
-
-            // Create a DBHelper instance to interact with the SQLite database
-            db = new DBHelper(context);
+            this.presenter = presenter;
         }
 
-        // Displays the popup on screen
         public void Show()
         {
-            // Create a dialog instance (popup window)
             Dialog dialog = new Dialog(context);
-
-            // Attach the XML layout we created earlier to this dialog
             dialog.SetContentView(Resource.Layout.Register);
 
-            // Connect UI elements from the XML to C# variables
             EditText usernameInput = dialog.FindViewById<EditText>(Resource.Id.editPopupUsername);
             EditText passwordInput = dialog.FindViewById<EditText>(Resource.Id.editPopupPassword);
+            EditText securityAnswerInput = dialog.FindViewById<EditText>(Resource.Id.editSecurityAnswer);
+            Spinner securityQuestionSpinner = dialog.FindViewById<Spinner>(Resource.Id.securityQuestionSpinner);
             Button registerButton = dialog.FindViewById<Button>(Resource.Id.buttonPopupRegister);
 
-            // Runs when user clicks the "Register" button
-            registerButton.Click += (s, e) =>
+            var questions = new List<string>
             {
-                // Read text from input fields
-                string username = usernameInput.Text;
-                string password = passwordInput.Text;
-                username = username.Trim().ToLower();
-
-
-                // Basic validation: ensure user didn't leave fields empty
-                if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
-                {
-                    Toast.MakeText(context, "Fields cannot be empty", ToastLength.Short).Show();
-                    return; // Stop the process
-                }
-
-                // Check if username already exists in the database
-                var existingUser = db.GetUser(username);
-                if (existingUser != null)
-                {
-                    Toast.MakeText(context, "User already exists", ToastLength.Short).Show();
-                    return;
-                }
-
-                // Generate a salt for security (temporary system)
-                string salt = SecurityUtils.GenerateSalt();
-
-                // Hash the password together with the salt
-                string hash = SecurityUtils.HashPassword(password, salt);
-
-                // Create a new User object and insert it into the database
-                db.InsertUser(new User(0, username, hash, salt));
-
-                // Notify the user that registration was successful
-                Toast.MakeText(context, "User Created!", ToastLength.Short).Show();
-
-                // Close the popup window
-                dialog.Dismiss();
+                "Choose a security question",
+                "What is the name of your first pet?",
+                "What city were you born in?",
+                "What is your favorite food?"
             };
 
-            // Finally show the dialog
+            var adapter = new ArrayAdapter<string>(
+                context,
+                Android.Resource.Layout.SimpleSpinnerItem,
+                questions
+            );
+            adapter.SetDropDownViewResource(Android.Resource.Layout.SimpleSpinnerDropDownItem);
+            securityQuestionSpinner.Adapter = adapter;
+
+            registerButton.Click += (s, e) =>
+            {
+                presenter.Register(
+                    usernameInput.Text,
+                    passwordInput.Text,
+                    securityQuestionSpinner.SelectedItem.ToString(),
+                    securityAnswerInput.Text
+                );
+
+                // 🔐 פתיחת RecoveryWords – הוא אחראי על הסגירה
+                new RecoveryWordsDialog(context, dialog).Show();
+            };
+
             dialog.Show();
         }
     }

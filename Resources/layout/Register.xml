@@ -28,7 +28,20 @@
       android:layout_marginTop="10dp"
       android:layout_width="match_parent"
       android:layout_height="wrap_content" />
+  <Spinner
+    android:id="@+id/securityQuestionSpinner"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:spinnerMode="dropdown"
+    android:layout_marginTop="16dp"/>
 
+  <EditText
+      android:id="@+id/editSecurityAnswer"
+      android:hint="Answer"
+      android:inputType="textPassword"
+      android:layout_marginTop="10dp"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content" />
   <Button
         android:id="@+id/buttonPopupRegister"
         android:text="Register"

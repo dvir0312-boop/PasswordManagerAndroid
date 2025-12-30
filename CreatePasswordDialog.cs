@@ -19,6 +19,7 @@ namespace EmptyProject2025Extended
             this.context = context;
             this.presenter = presenter;
             this.owner = owner;
+
             db = new DBHelper(context);
         }
 
@@ -46,6 +47,7 @@ namespace EmptyProject2025Extended
                     return;
                 }
 
+                // DBHelper already encrypts internally
                 PasswordInfo info = new PasswordInfo(
                     0,
                     username,
@@ -55,6 +57,7 @@ namespace EmptyProject2025Extended
                 );
 
                 db.Create(info);
+
                 presenter.LoadPasswords();
                 dialog.Dismiss();
             };

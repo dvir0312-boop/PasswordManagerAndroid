@@ -4,6 +4,7 @@ using Android.Widget;
 using EmptyProject2025Extended.Data;
 using EmptyProject2025Extended.Models;
 using EmptyProject2025Extended.Presenters;
+using EmptyProject2025Extended.Security;
 using System.Collections.Generic;
 
 namespace EmptyProject2025Extended
@@ -29,7 +30,8 @@ namespace EmptyProject2025Extended
 
             // Get OWNER from LoginActivity
             currentOwner = Intent.GetStringExtra("owner");
-
+            presenter = new MainPresenter(this, new DBHelper(this), currentOwner);
+ 
             // Safety check (prevents crashes)
             if (string.IsNullOrWhiteSpace(currentOwner))
             {

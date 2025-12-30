@@ -24,7 +24,7 @@ namespace EmptyProject2025Extended.Presenters
             view.DisplayPasswords(list);
         }
 
-        // Simple search by site (local filter, no DB change!)
+        // Search (local filter)
         public void Search(string text)
         {
             if (string.IsNullOrWhiteSpace(text))

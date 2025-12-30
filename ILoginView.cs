@@ -6,10 +6,7 @@
         string Password { get; }
 
         void ShowMessage(string message);
-
-        // Sends the logged-in username
         void NavigateToMain(string owner);
-
         void ClearInputFields();
     }
 }
