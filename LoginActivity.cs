@@ -16,7 +16,6 @@ namespace EmptyProject2025Extended
         private TextView txtRegister;
         private TextView txtReset;
 
-
         private LoginPresenter presenter;
 
         protected override void OnCreate(Bundle savedInstanceState)
@@ -31,7 +30,6 @@ namespace EmptyProject2025Extended
             txtRegister = FindViewById<TextView>(Resource.Id.textRegisterLink);
             txtReset = FindViewById<TextView>(Resource.Id.textResetLink);
 
-
             presenter = new LoginPresenter(this, new DBHelper(this));
 
             btnLogin.Click += (s, e) =>
@@ -43,9 +41,13 @@ namespace EmptyProject2025Extended
             {
                 new RegisterDialog(this, presenter).Show();
             };
-        }
 
-        // ================= ILoginView =================
+            // ✅ Reset password dialog
+            txtReset.Click += (s, e) =>
+            {
+                new ResetDialog(this, presenter).Show();
+            };
+        }
 
         public string Username => editUsername.Text;
         public string Password => editPassword.Text;

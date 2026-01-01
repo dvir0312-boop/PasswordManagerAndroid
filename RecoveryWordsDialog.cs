@@ -1,7 +1,6 @@
 ﻿using Android.App;
 using Android.Content;
 using Android.Widget;
-using System;
 using System.Collections.Generic;
 
 namespace EmptyProject2025Extended
@@ -10,12 +9,15 @@ namespace EmptyProject2025Extended
     {
         private readonly Context context;
         private readonly Dialog registerDialog;
+        private readonly List<string> words;
+
         private Dialog dialog;
 
-        public RecoveryWordsDialog(Context context, Dialog registerDialog)
+        public RecoveryWordsDialog(Context context, Dialog registerDialog, List<string> words)
         {
             this.context = context;
             this.registerDialog = registerDialog;
+            this.words = words;
         }
 
         public void Show()
@@ -23,6 +25,7 @@ namespace EmptyProject2025Extended
             dialog = new Dialog(context);
             dialog.SetContentView(Resource.Layout.RecoveryWords);
 
+            // ----- WORD TEXTVIEWS -----
             TextView[] wordViews =
             {
                 dialog.FindViewById<TextView>(Resource.Id.textWord1),
@@ -37,12 +40,13 @@ namespace EmptyProject2025Extended
                 dialog.FindViewById<TextView>(Resource.Id.textWord10)
             };
 
-            List<string> words = GenerateRecoveryWords();
+            // Fill UI with the actual generated words
             for (int i = 0; i < 10; i++)
             {
                 wordViews[i].Text = $"{i + 1}. {words[i]}";
             }
 
+            // ----- CHECKBOX + BUTTONS -----
             CheckBox checkSaved = dialog.FindViewById<CheckBox>(Resource.Id.checkSavedWords);
             Button btnContinue = dialog.FindViewById<Button>(Resource.Id.buttonContinueRecovery);
             Button btnCancel = dialog.FindViewById<Button>(Resource.Id.buttonCancelRecovery);
@@ -56,6 +60,10 @@ namespace EmptyProject2025Extended
 
             btnContinue.Click += (s, e) =>
             {
+                // Prevent double click issues
+                btnContinue.Enabled = false;
+
+                // Close recovery first, then register
                 dialog.Dismiss();
                 registerDialog.Dismiss();
             };
@@ -66,27 +74,6 @@ namespace EmptyProject2025Extended
             };
 
             dialog.Show();
-        }
-
-        private List<string> GenerateRecoveryWords()
-        {
-            string[] pool =
-            {
-                "apple","river","stone","cloud","moon","forest","gold","storm","fire","shadow",
-                "eagle","wind","night","sun","wolf","water","mountain","iron","light","earth"
-            };
-
-            Random rnd = new Random();
-            var result = new List<string>();
-
-            while (result.Count < 10)
-            {
-                string word = pool[rnd.Next(pool.Length)];
-                if (!result.Contains(word))
-                    result.Add(word);
-            }
-
-            return result;
         }
     }
 }

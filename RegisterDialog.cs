@@ -10,6 +10,7 @@ namespace EmptyProject2025Extended
     {
         private readonly Context context;
         private readonly LoginPresenter presenter;
+        private Spinner securityQuestionSpinner;
 
         public RegisterDialog(Context context, LoginPresenter presenter)
         {
@@ -25,12 +26,12 @@ namespace EmptyProject2025Extended
             EditText usernameInput = dialog.FindViewById<EditText>(Resource.Id.editPopupUsername);
             EditText passwordInput = dialog.FindViewById<EditText>(Resource.Id.editPopupPassword);
             EditText securityAnswerInput = dialog.FindViewById<EditText>(Resource.Id.editSecurityAnswer);
-            Spinner securityQuestionSpinner = dialog.FindViewById<Spinner>(Resource.Id.securityQuestionSpinner);
+            securityQuestionSpinner = dialog.FindViewById<Spinner>(Resource.Id.securityQuestionSpinner);
             Button registerButton = dialog.FindViewById<Button>(Resource.Id.buttonPopupRegister);
 
+            // Security questions list (UI only)
             var questions = new List<string>
             {
-                "Choose a security question",
                 "What is the name of your first pet?",
                 "What city were you born in?",
                 "What is your favorite food?"
@@ -41,20 +42,27 @@ namespace EmptyProject2025Extended
                 Android.Resource.Layout.SimpleSpinnerItem,
                 questions
             );
+
             adapter.SetDropDownViewResource(Android.Resource.Layout.SimpleSpinnerDropDownItem);
             securityQuestionSpinner.Adapter = adapter;
 
             registerButton.Click += (s, e) =>
             {
-                presenter.Register(
+                // Call presenter. Only if success -> show recovery words dialog.
+                bool ok = presenter.Register(
                     usernameInput.Text,
                     passwordInput.Text,
                     securityQuestionSpinner.SelectedItem.ToString(),
-                    securityAnswerInput.Text
+                    securityAnswerInput.Text,
+                    out List<string> words
                 );
 
-                // 🔐 פתיחת RecoveryWords – הוא אחראי על הסגירה
-                new RecoveryWordsDialog(context, dialog).Show();
+                if (!ok)
+                    return;
+
+                // NOTE: Do NOT dismiss register dialog here.
+                // Recovery dialog will close BOTH dialogs on Continue.
+                new RecoveryWordsDialog(context, dialog, words).Show();
             };
 
             dialog.Show();

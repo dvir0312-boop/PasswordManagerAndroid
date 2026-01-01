@@ -11,6 +11,7 @@
         public string SecurityQuestion { get; set; }
         public string SecurityAnswerHash { get; set; }
         public string SecurityAnswerSalt { get; set; }
+        // public string RecoveryWords { get; set; }
 
         // Empty constructor
         public User() { }
