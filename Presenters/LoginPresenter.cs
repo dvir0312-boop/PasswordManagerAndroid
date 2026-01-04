@@ -58,7 +58,11 @@ namespace EmptyProject2025Extended.Presenters
         )
         {
             recoveryWordsOut = null;
-
+            if( (password.Length < 6) || (!password.Any(ch=> !char.IsLetterOrDigit(ch))))
+            {
+                view.ShowMessage("Password does not meet the requirments");
+                return false;
+            }
             if (string.IsNullOrWhiteSpace(username) ||
                 string.IsNullOrWhiteSpace(password) ||
                 string.IsNullOrWhiteSpace(securityAnswer) ||
