@@ -46,8 +46,6 @@ namespace EmptyProject2025Extended
             imgProfile = FindViewById<ImageView>(Resource.Id.imgProfile);
             passwordContainer = FindViewById<LinearLayout>(Resource.Id.passwordContainer);
 
-            // Presenter (with owner)
-            presenter = new MainPresenter(this, new DBHelper(this), currentOwner);
 
             // Initial load
             presenter.LoadPasswords();

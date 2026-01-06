@@ -1,6 +1,18 @@
-<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#2c3e50</color>
-    <color name="colorPrimaryDark">#1B3147</color>
-    <color name="colorAccent">#3498db</color>
+  <!-- Backgrounds -->
+  <color name="bg_main">#0047AB</color>
+  <!-- Dark navy -->
+  <color name="bg_card">#1E293B</color>
+
+  <!-- Text -->
+  <color name="text_primary">#F8FAFC</color>
+  <color name="text_secondary">#94A3B8</color>
+
+  <!-- Accent -->
+  <color name="accent">#38BDF8</color>
+  <!-- Cyan -->
+  <color name="danger">#EF4444</color>
+
+  <!-- Inputs -->
+  <color name="input_bg">#020617</color>
 </resources>

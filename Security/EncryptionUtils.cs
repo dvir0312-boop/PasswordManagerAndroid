@@ -56,7 +56,6 @@ namespace EmptyProject2025Extended.Security
 
                 string final = Convert.ToBase64String(combined);
 
-                Log.Debug("AES", "Encrypted: " + final);
 
                 return final;
             }
@@ -93,14 +92,12 @@ namespace EmptyProject2025Extended.Security
 
                     string final = Encoding.UTF8.GetString(plainBytes);
 
-                    Log.Debug("AES", "Decrypted: " + final);
 
                     return final;
                 }
             }
             catch (Exception ex)
             {
-                Log.Error("AES", "Decrypt ERROR: " + ex.Message);
                 return "DECRYPT_ERROR";
             }
         }

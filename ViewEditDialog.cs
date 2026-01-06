@@ -1,5 +1,6 @@
 ﻿using Android.App;
 using Android.Content;
+using Android.Text;
 using Android.Widget;
 using EmptyProject2025Extended.Data;
 using EmptyProject2025Extended.Models;
@@ -37,6 +38,7 @@ namespace EmptyProject2025Extended
             EditText siteInput = dialog.FindViewById<EditText>(Resource.Id.editSite);
             EditText usernameInput = dialog.FindViewById<EditText>(Resource.Id.editUsername);
             EditText passwordInput = dialog.FindViewById<EditText>(Resource.Id.editPassword);
+            ImageButton toggleBtn = dialog.FindViewById<ImageButton>(Resource.Id.btnTogglePassword);
 
             Button updateButton = dialog.FindViewById<Button>(Resource.Id.buttonUpdate);
             Button editButton = dialog.FindViewById<Button>(Resource.Id.buttonToggleEdit);
@@ -46,7 +48,26 @@ namespace EmptyProject2025Extended
             siteInput.Text = data.Site;
             usernameInput.Text = data.Username;
             passwordInput.Text = data.Password;
+            bool isVisible = false;
+            passwordInput.InputType = InputTypes.ClassText | InputTypes.TextVariationPassword;
+            passwordInput.SetSelection(passwordInput.Text.Length);
+            toggleBtn.Click += (s, e) =>
+            {
+                isVisible = !isVisible;
 
+                if (isVisible)
+                {
+                    passwordInput.InputType = InputTypes.ClassText | InputTypes.TextVariationVisiblePassword;
+                    toggleBtn.SetImageResource(Resource.Drawable.ic_eye_open);
+                }
+                else
+                {
+                    passwordInput.InputType = InputTypes.ClassText | InputTypes.TextVariationPassword;
+                    toggleBtn.SetImageResource(Resource.Drawable.ic_eye_closed);
+                }
+
+                passwordInput.SetSelection(passwordInput.Text.Length);
+            };
             // Mode handler
             void SetMode(bool editMode)
             {
